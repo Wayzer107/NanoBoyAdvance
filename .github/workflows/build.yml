@@ -1,6 +1,6 @@
 name: Build
 
-on: [push, pull_request, workflow_dispatch]
+on: workflow_dispatch
 
 jobs:
   build-win64:
@@ -21,7 +21,7 @@ jobs:
             -B build \
             -G "Unix Makefiles" \
             -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_CXX_FLAGS="-s" \
+            -DCMAKE_CXX_FLAGS="-s -march=broadwell -mtune=broadwell -O3" \
             -DPLATFORM_QT_STATIC=ON \
             -DSDL2_STATIC=ON \
             -DGLEW_USE_STATIC_LIBS=ON \
@@ -51,7 +51,7 @@ jobs:
           sudo apt-get install -y libsdl2-dev libglew-dev qt5-default
       - name: Build NanoBoyAdvance
         run: |
-          cmake -B build -DCMAKE_BUILD_TYPE=Release
+          cmake -B build -DCMAKE_BUILD_TYPE=Release DCMAKE_CXX_FLAGS="-march=broadwell -mtune=broadwell -O3
           cd build
           make -j$(nproc)
       - name: Collect artifacts
@@ -63,45 +63,4 @@ jobs:
         with:
           name: NanoBoyAdvance-linux
           path: upload
-          if-no-files-found: error
-
-  build-macOS:
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          submodules: recursive
-      - name: Setup dependencies
-        env:
-          HOMEBREW_NO_ANALYTICS: 1
-        run: brew install sdl2 glew qt@5
-      - name: Build NanoBoyAdvance
-        run: |
-          cmake -B build \
-                -DCMAKE_CXX_FLAGS="-s" \
-                -DSDL2_STATIC=ON \
-                -DGLEW_USE_STATIC_LIBS=ON \
-                -DCMAKE_BUILD_TYPE=Release \
-                -DCMAKE_PREFIX_PATH="$(brew --prefix qt@5);$(brew --prefix glew)" \
-                -DMACOS_BUILD_APP_BUNDLE=ON \
-                -DMACOS_BUNDLE_QT=ON
-          cd build
-          make -j$(sysctl -n hw.availcpu)
-      - name: Create disk image
-        run: |
-          mkdir dmg
-          cp -a build/bin/qt/NanoBoyAdvance.app dmg/NanoBoyAdvance.app
-          codesign -s - --deep -f dmg/NanoBoyAdvance.app
-          ln -s /Applications dmg/Applications
-          hdiutil create \
-                  -fs HFS+ \
-                  -volname NanoBoyAdvance \
-                  -srcfolder dmg \
-                  -ov -format UDBZ \
-                  NanoBoyAdvance.dmg
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v2
-        with:
-          name: NanoBoyAdvance-${{ runner.os }}
-          path: NanoBoyAdvance.dmg
           if-no-files-found: error
