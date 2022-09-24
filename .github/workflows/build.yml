@@ -51,7 +51,7 @@ jobs:
           sudo apt-get install -y libsdl2-dev libglew-dev qt5-default
       - name: Build NanoBoyAdvance
         run: |
-          cmake -B build -DCMAKE_BUILD_TYPE=Release DCMAKE_CXX_FLAGS="-march=broadwell -mtune=broadwell -O3
+          cmake -B build -DCMAKE_BUILD_TYPE=Release DCMAKE_CXX_FLAGS="-march=broadwell -mtune=broadwell -O3"
           cd build
           make -j$(nproc)
       - name: Collect artifacts
